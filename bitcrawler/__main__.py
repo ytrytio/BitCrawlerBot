@@ -3,12 +3,15 @@ from typing import List, Any
 from logging import Logger
 from aiogram import Bot
 from aiogram.exceptions import TelegramUnauthorizedError
+from telethon.tl.types import User # type: ignore
+from telethon.errors import SessionPasswordNeededError # type: ignore
 from bitcrawler.core.bot import create_main_bot
 from bitcrawler.core.mirror import Mirror
-from bitcrawler.utils import init_db, setup_logger
-from bitcrawler.config import SESSION
+from bitcrawler.utils import init_db, setup_logger, LogColors
+from bitcrawler.config import SESSION, PHONE
 from bitcrawler.signals import restart_event
 from bitcrawler.storage.sqlitestorage import SQLiteStorage
+from bitcrawler.userbot.client import client
 
 logger: Logger = setup_logger()
 
@@ -66,14 +69,66 @@ async def polling_loop() -> None:
 
 
 async def main() -> None:
-    await init_db()
-    await polling_loop()
+    if not client.is_connected():
+        await client.connect()
 
-    if SESSION:
-        try:
-            await SESSION.close()
-        except Exception as e:
-            logger.error(f"Error closing global SESSION: {e}")
+    try:
+        info = await client.get_me()
+        if info:
+            logger.info(f"User is already authorized: {info.id if isinstance(info, User) else info.user_id}")
+        else:
+            logger.info(f"User is not authorized, starting login process...")
+            await client.send_code_request(PHONE)
+            code = input(f"{LogColors.CYAN}[INPUT] Введите код, отправленный на ваш номер телефона: {LogColors.RESET}")
+
+            try:
+                await client.sign_in(PHONE, code=code)
+            except SessionPasswordNeededError:
+                logger.info(f"Two-factor authentication password required.")
+                password = input(f"{LogColors.CYAN}[INPUT] Введите пароль для двухфакторной аутентификации: {LogColors.RESET}")
+                await client.sign_in(password=password)
+
+            info = await client.get_me()
+            if not info:
+                logger.error("Unable to retrieve user data after login.")
+                raise RuntimeError("Unable to retrieve user data after login.")
+
+        if isinstance(info, User):
+            user_id = info.id
+        else:
+            user_id = getattr(info, "user_id", None)
+
+        if user_id is None:
+            logger.error(f"Unable to determine user_id.")
+            raise RuntimeError("Unable to determine user_id.")
+
+        logger.info(f"Successfully connected to user account {user_id}.")
+
+        if isinstance(info, User):
+            user_id = info.id
+        else:
+            user_id = getattr(info, "user_id", None)
+
+        if user_id is None:
+            raise RuntimeError("Unable to get user_id.")
+
+        logger.info(f"Connected to user account {user_id}.")
+        await init_db()
+        await polling_loop()
+
+        if SESSION:
+            try:
+                await SESSION.close()
+            except Exception as e:
+                logger.error(f"Error closing global SESSION: {e}")
+
+    except Exception as e:
+        logger.error(f"{LogColors.RED}Ошибка авторизации: {e}{LogColors.RESET}")
+        raise
+    finally:
+        if client.is_connected():
+            await client.disconnect() # type: ignore
+            logger.info(f"{LogColors.YELLOW}Соединение с Telegram закрыто{LogColors.RESET}")
 
 
 if __name__ == "__main__":

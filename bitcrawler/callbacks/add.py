@@ -2,11 +2,16 @@ from aiogram import Bot
 from aiogram.types import CallbackQuery, Message, InaccessibleMessage
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from bitcrawler.utils import database, aiosqlite, Archive, bq
+from aiosqlite import OperationalError
+from bitcrawler.utils import database, aiosqlite, Archive, bq, setup_logger
 from bitcrawler.config import DATABASES_FOLDER
+from bitcrawler.userbot import download
 from pathlib import Path
 from typing import Any
 from json import dumps, loads
+from asyncio import sleep as asleep
+
+logger = setup_logger()
 
 class EnterPassword(StatesGroup):
     password = State()
@@ -30,7 +35,8 @@ async def add(callback: CallbackQuery, db: aiosqlite.Connection, state: FSMConte
         ARCHIVE_PATH = DATABASES_FOLDER / file_name
         if not file_path: return
 
-        await bot.download_file(file_path, ARCHIVE_PATH)
+        # await bot.download_file(file_path, ARCHIVE_PATH)
+        await download(message.chat.id, message.reply_to_message.message_id, file_name)
         await message.edit_text(
             bq("Запрос принят.")+"\n"+
             bq("Архив загружен.")+"\n"+
@@ -55,6 +61,7 @@ async def enter_pass(message: Message, db: aiosqlite.Connection, state: FSMConte
 
     data = await state.get_data()
     call_msg = Message.model_validate(loads(data["call_message"]))
+    archive_id = data["archive_id"]
     ARCHIVE_PATH = Path(data["path"])
 
     if message.reply_to_message.message_id != call_msg.message_id: return
@@ -101,9 +108,24 @@ async def enter_pass(message: Message, db: aiosqlite.Connection, state: FSMConte
             parse_mode="HTML"
         ).as_(bot)
 
-    await db.execute(
-        "UPDATE databases SET format=? WHERE id=?",
-        (returned, data["archive_id"])
-    )
+        for attempt in range(3):
+            try:
+                await db.execute(
+                    "UPDATE databases SET format=? WHERE id=?",
+                    (returned, archive_id)
+                )
+                await db.commit()
+                logger.info(f"Database updated: format={returned}, archive_id={archive_id}")
+                break
+            except OperationalError as e:
+                if "database is locked" in str(e).lower():
+                    logger.warning(f"Database locked, attempt {attempt + 1}/3")
+                    await asleep(0.5)
+                else:
+                    raise
+        else:
+            logger.error("Failed to update database after 3 attempts: database is locked")
+            raise OperationalError("Failed to update database: database is locked")
+
     await state.clear()
     await archive.delete()

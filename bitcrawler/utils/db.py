@@ -41,3 +41,13 @@ async def get_all_mirrors(db: aiosqlite.Connection) -> str:
         mirrors = [dict(row) for row in rows]
 
     return dumps(mirrors, ensure_ascii=False, indent=2)
+
+
+@database
+async def get_all_databases(db: aiosqlite.Connection) -> str:
+    db.row_factory = aiosqlite.Row
+    async with db.execute("SELECT * FROM databases") as cursor:
+        rows = await cursor.fetchall()
+        dbs = [dict(row) for row in rows]
+
+    return dumps(dbs, ensure_ascii=False, indent=2)

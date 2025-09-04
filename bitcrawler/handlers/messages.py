@@ -14,6 +14,7 @@ def setup_messages_router(name: str):
     router.message.register(darken, Command("darken"))
     router.message.register(update, Command("update"))
     router.message.register(ping, Command("ping"))
+    router.message.register(search, Command("search"))
     router.message.register(on_archive, F.document)
     router.message.register(enter_pass, StateFilter(EnterPassword.password), F.text)
     router.message.register(enter_token, StateFilter(EnterToken.token), F.text)
