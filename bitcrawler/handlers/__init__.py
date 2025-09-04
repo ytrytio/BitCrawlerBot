@@ -1,6 +1,10 @@
-from .messages import router as msg_router
-from .callbacks import router as cb_router
+from .callbacks import setup_callbacks_router
+from .messages import setup_messages_router
 
-routers = [msg_router, cb_router]
+def get_routers(name: str):
+    return [
+        setup_callbacks_router(name),
+        setup_messages_router(name),
+    ]
 
-__all__ = ["routers"]
+__all__ = ["get_routers"]

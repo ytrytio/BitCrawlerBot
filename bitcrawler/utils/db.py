@@ -2,6 +2,7 @@ from typing import Callable, Any, Awaitable
 from typing_extensions import Callable
 import aiosqlite
 import aiofiles
+from json import dumps
 from bitcrawler.config import DB_PATH, TEMPLATE_SQL
 
 def database(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
@@ -28,4 +29,15 @@ async def add_database(db: aiosqlite.Connection, name: str, format: str, passwor
     )
     row = await cursor.fetchone()
     if row is None: raise RuntimeError("Unable to get variable 'id'")
+    await db.commit()
     return row[0]
+
+
+@database
+async def get_all_mirrors(db: aiosqlite.Connection) -> str:
+    db.row_factory = aiosqlite.Row
+    async with db.execute("SELECT * FROM mirrors") as cursor:
+        rows = await cursor.fetchall()
+        mirrors = [dict(row) for row in rows]
+
+    return dumps(mirrors, ensure_ascii=False, indent=2)

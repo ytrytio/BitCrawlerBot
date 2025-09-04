@@ -1,8 +1,9 @@
 from dotenv import dotenv_values
-from typing import Any, Dict
-from bitcrawler.handlers import routers
-from bitcrawler.utils import init_db, setup_logger
-
+from typing import Dict, Tuple
+from bitcrawler.handlers import get_routers
+from bitcrawler.storage import SQLiteStorage
+from bitcrawler.utils import setup_logger
+from bitcrawler.config import SESSION
 from aiogram import Bot, Dispatcher
 
 secrets: Dict[str, str | None] = dotenv_values('.env')
@@ -10,11 +11,9 @@ BOT_TOKEN: str = secrets["BOT_TOKEN"] or ""
 
 logger = setup_logger()
 
-bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
-dp.include_routers(*routers)
-
-async def main() -> Any:
-    await init_db()
+async def create_main_bot(storage: SQLiteStorage) -> Tuple[Bot, Dispatcher]:
+    bot = Bot(token=BOT_TOKEN, session=SESSION)
+    dp = Dispatcher(name="Main", storage=storage)
+    dp.include_routers(*get_routers("main"))
     await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot) # type: ignore
+    return bot, dp

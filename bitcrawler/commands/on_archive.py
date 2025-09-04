@@ -1,15 +1,17 @@
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from bitcrawler.utils import add_database
+from bitcrawler.utils import add_database, bq
 from pathlib import Path
 from typing import Dict
 from dotenv import dotenv_values
 
 secrets: Dict[str, str | None] = dotenv_values('.env')
-SOURCE_CHAT_ID = secrets["SOURCE_CHAT_ID"]
-SOURCE_TOPIC_ID = secrets["SOURCE_TOPIC_ID"]
+SOURCE_CHAT_ID = int(secrets["SOURCE_CHAT_ID"]) # type: ignore
+SOURCE_TOPIC_ID = int(secrets["SOURCE_TOPIC_ID"]) # type: ignore
 
 async def on_archive(message: Message):
-    if not message.document: return
+    if not message.document or not message.chat: return
+    if message.message_thread_id != SOURCE_TOPIC_ID: return
+    if message.chat.id != SOURCE_CHAT_ID: return
 
     file_name = message.document.file_name or " "
     file_ext = Path(file_name).suffix.lower()
@@ -26,12 +28,13 @@ async def on_archive(message: Message):
         name=message.document.file_name,
         format=archive_type
     )
+    print(db_id)
 
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="📥 Скачать",
+                    text="Скачать",
                     callback_data=f"add_{db_id}"
                 )
             ]
@@ -39,7 +42,9 @@ async def on_archive(message: Message):
     )
 
     await message.reply(
-        f"🗃 <b>Обнаружен новый архив!</b>\n<b>Формат</b>: <i>{archive_type}</i>\n\n<i>Может потребоваться пароль.</i>",
+        bq(f"Обнаружен новый архив!") + "\n" +
+        bq("Формат:", f"{archive_type}") + "\n" +
+        bq("Может потребоваться пароль."),
         parse_mode="HTML",
         reply_markup=keyboard
     )
