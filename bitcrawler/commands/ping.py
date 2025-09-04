@@ -5,7 +5,7 @@ from bitcrawler.utils.utils import bq
 async def ping(message: Message):
     start = time.perf_counter()
     sent_msg = await message.reply(
-        bq("Пинг к серверу Telegram..."),
+        bq("Пинг..."),
         parse_mode="HTML"
     )
     end = time.perf_counter()
@@ -13,7 +13,7 @@ async def ping(message: Message):
     delta_ms = (end - start) * 1000
 
     await sent_msg.edit_text(
-        bq("Пинг к серверу Telegram... ") + bq("Понг!") + "\n" +
+        bq("Пинг... Понг!") + "\n" +
         bq("Задержка:", f"{delta_ms:.1f}ms"),
         parse_mode="HTML"
     )
