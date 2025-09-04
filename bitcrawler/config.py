@@ -7,6 +7,8 @@ secrets: Dict[str, str | None] = dotenv_values('.env')
 PROXY: str | None = secrets["PROXY"]
 SESSION = AiohttpSession(proxy=PROXY) if PROXY else None
 
+CURRENT_BRANCH = "master"
+
 PROJECT_DIR = Path(__file__).parent.parent
 DATABASES_FOLDER = PROJECT_DIR / "databases"
 TEMPLATE_SQL = PROJECT_DIR / "template.sql"
