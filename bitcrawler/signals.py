@@ -6,4 +6,4 @@ restart_event = asyncio.Event()
 
 async def restart_process():
     await asyncio.sleep(2)
-    os.execv(sys.executable, [sys.executable] + sys.argv)
+    os.execvpe("uv", ["uv", "run", "python", "-m", "bitcrawler"], os.environ)
