@@ -2,6 +2,7 @@ import asyncio
 from typing import List, Any
 from logging import Logger
 from aiogram import Bot
+from aiogram.exceptions import TelegramUnauthorizedError
 from bitcrawler.core.bot import create_main_bot
 from bitcrawler.core.mirror import Mirror
 from bitcrawler.utils import init_db, setup_logger
@@ -22,11 +23,17 @@ async def collect_bots() -> tuple[List[Bot], Any, SQLiteStorage]:
 
     mirrors = await Mirror.get_all_active()
     for mirror in mirrors:
-        bot = await mirror.get_bot()
-        bots.append(bot)
-        logger.info(f"Mirror #{mirror.id} prepared.")
+        try:
+            bot = await mirror.get_bot()
+            await bot.get_me()
+            bots.append(bot)
+            logger.info(f"Mirror #{mirror.id} prepared.")
+        except TelegramUnauthorizedError:
+            logger.error(f"Mirror #{mirror.id} token invalid, deleting...")
+            await mirror.delete()
 
     return bots, main_dp, storage
+
 
 
 async def polling_loop() -> None:
