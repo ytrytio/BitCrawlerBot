@@ -1,7 +1,8 @@
 import subprocess
 from aiogram.types import Message
+from asyncio import create_task
 from typing import List
-from bitcrawler.signals import restart_event
+from bitcrawler.signals import restart_process
 from bitcrawler.config import PROJECT_DIR, CURRENT_BRANCH
 from bitcrawler.utils import setup_logger, bq
 
@@ -52,5 +53,4 @@ async def update(message: Message):
         parse_mode="HTML"
     )
 
-    if restart:
-        restart_event.set()
+    if restart: create_task(restart_process())
