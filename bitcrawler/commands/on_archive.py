@@ -20,6 +20,8 @@ async def on_archive(message: Message):
         ".gz": "GZIP",
     }.get(file_ext, "Unknown")
 
+    if archive_type == "Unknown": return
+
     db_id = await add_database(
         name=message.document.file_name,
         format=archive_type
