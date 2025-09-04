@@ -1,17 +1,19 @@
+import time
 from aiogram.types import Message
 from bitcrawler.utils.utils import bq
 
 async def ping(message: Message):
-    user_date = message.date
-    ping_msg = await message.reply(
-        bq("Пинг..."),
+    start = time.perf_counter()
+    sent_msg = await message.reply(
+        bq("Пинг к серверу Telegram..."),
         parse_mode="HTML"
     )
-    bot_date = ping_msg.date
-    delta_ms = (bot_date - user_date).total_seconds() * 1000
+    end = time.perf_counter()
 
-    await ping_msg.edit_text(
-        bq("Пинг... ") + bq("Понг!") + "\n" +
+    delta_ms = (end - start) * 1000
+
+    await sent_msg.edit_text(
+        bq("Пинг к серверу Telegram... ") + bq("Понг!") + "\n" +
         bq("Задержка:", f"{delta_ms:.1f}ms"),
         parse_mode="HTML"
     )
