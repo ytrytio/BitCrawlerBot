@@ -14,6 +14,12 @@ async def update(message: Message):
     output_lines: List[str] = []
     restart = False
 
+    upd_msg: Message = await message.reply(
+        bq("Обновление.") + "\n"  +
+        bq("В процессе..."),
+        parse_mode="HTML"
+    )
+
     local_sha = subprocess.run(
         ["git", "rev-parse", "HEAD"],
         cwd=PROJECT_DIR,
@@ -50,7 +56,7 @@ async def update(message: Message):
 
     reply_text = "\n".join(output_lines)
 
-    await message.reply(
+    await upd_msg.edit_text(
         bq("Обновление") + "\n" + reply_text,
         parse_mode="HTML"
     )
