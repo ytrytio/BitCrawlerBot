@@ -8,6 +8,7 @@ def setup_messages_router(name: str):
     router = Router(name=f"messages_{name}")
 
     router.message.register(start, Command("start"))
+    router.message.register(still_alive, Command("still_alive"))
     router.message.register(mirrors, Command("mirrors"))
     router.message.register(illuminate, Command("illuminate"))
     router.message.register(darken, Command("darken"))
