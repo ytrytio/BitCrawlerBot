@@ -45,7 +45,7 @@ async def add(callback: CallbackQuery, db: aiosqlite.Connection, state: FSMConte
             archive_id=str(callback.data.split("_")[1])
         )
     else:
-        await callback.answer("❌ Архив не найден.")
+        await callback.answer("Архив не найден.")
 
 
 @database
