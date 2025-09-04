@@ -5,7 +5,6 @@ from bitcrawler.config import SESSION
 
 logger = setup_logger()
 
-
 class Mirror:
     table_name = "mirrors"
 

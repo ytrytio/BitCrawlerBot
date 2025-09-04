@@ -3,12 +3,14 @@ from aiogram.types import Message
 from asyncio import create_task
 from typing import List
 from bitcrawler.signals import restart_process
-from bitcrawler.config import PROJECT_DIR, CURRENT_BRANCH
+from bitcrawler.config import SOURCE_CHAT_ID, PROJECT_DIR, CURRENT_BRANCH
 from bitcrawler.utils import setup_logger, bq
 
 logger = setup_logger()
 
 async def update(message: Message):
+    if message.chat.id != SOURCE_CHAT_ID: return
+
     output_lines: List[str] = []
     restart = False
 

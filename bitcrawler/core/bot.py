@@ -1,13 +1,10 @@
-from dotenv import dotenv_values
-from typing import Dict, Tuple
+from typing import Tuple
 from bitcrawler.handlers import get_routers
 from bitcrawler.storage import SQLiteStorage
 from bitcrawler.utils import setup_logger
-from bitcrawler.config import SESSION
+from bitcrawler.config import SESSION, BOT_TOKEN
 from aiogram import Bot, Dispatcher
 
-secrets: Dict[str, str | None] = dotenv_values('.env')
-BOT_TOKEN: str = secrets["BOT_TOKEN"] or ""
 
 logger = setup_logger()
 

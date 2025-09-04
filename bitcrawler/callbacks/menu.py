@@ -5,6 +5,9 @@ from bitcrawler.utils.utils import bq
 async def menu(callback: CallbackQuery):
     if not callback.message or not callback.message.chat or not callback.from_user: return
     if not isinstance(callback.message, Message): return
+    if callback.message.chat.type != "private":
+        await callback.answer("Доступно только в личных сообщениях.")
+        return
 
     await callback.message.edit_text(
         bq("Главное меню"),

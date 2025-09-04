@@ -11,7 +11,6 @@ from bitcrawler.storage.sqlitestorage import SQLiteStorage
 
 logger: Logger = setup_logger()
 
-
 async def collect_bots() -> tuple[List[Bot], Any, SQLiteStorage]:
     storage = SQLiteStorage()
     await storage.connect()

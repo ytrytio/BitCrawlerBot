@@ -15,6 +15,10 @@ class EnterPassword(StatesGroup):
 async def add(callback: CallbackQuery, db: aiosqlite.Connection, state: FSMContext, bot: Bot, **kwargs: Any):
     message = callback.message
     if not message or not isinstance(message, Message) or not message.reply_to_message or not callback.data: return
+    if message.chat.type != "private":
+        await callback.answer("Доступно только в личных сообщениях.")
+        return
+
     document = message.reply_to_message.document
 
     if document:

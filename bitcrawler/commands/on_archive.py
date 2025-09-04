@@ -1,12 +1,8 @@
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from bitcrawler.utils import add_database, bq
+from bitcrawler.config import SOURCE_CHAT_ID, SOURCE_TOPIC_ID
 from pathlib import Path
-from typing import Dict
-from dotenv import dotenv_values
 
-secrets: Dict[str, str | None] = dotenv_values('.env')
-SOURCE_CHAT_ID = int(secrets["SOURCE_CHAT_ID"]) # type: ignore
-SOURCE_TOPIC_ID = int(secrets["SOURCE_TOPIC_ID"]) # type: ignore
 
 async def on_archive(message: Message):
     if not message.document or not message.chat: return

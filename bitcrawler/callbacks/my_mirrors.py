@@ -6,6 +6,9 @@ from typing import List
 async def my_mirrors(callback: CallbackQuery):
     if not callback.message or not callback.message.chat or not callback.from_user: return
     if not isinstance(callback.message, Message): return
+    if callback.message.chat.type != "private":
+        await callback.answer("Доступно только в личных сообщениях.")
+        return
 
     user_id = callback.from_user.id
     mirrors_list = await Mirror.get_by_owner(owner_id=user_id)
