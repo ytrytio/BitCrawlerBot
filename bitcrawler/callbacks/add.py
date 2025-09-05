@@ -21,6 +21,7 @@ async def add(callback: CallbackQuery, db: aiosqlite.Connection, state: FSMConte
     message = callback.message
     if not message or not isinstance(message, Message) or not message.reply_to_message or not callback.data: return
     if not API_ID or not API_HASH: return await callback.answer("Юзербот-загрузчик не подключён.")
+    logger.info("Archive detected.")
 
     document = message.reply_to_message.document
 
@@ -34,6 +35,7 @@ async def add(callback: CallbackQuery, db: aiosqlite.Connection, state: FSMConte
             parse_mode="HTML"
         )
 
+        logger.info("Trying to download...")
         try:
             download_result = await userbot.download(
                 chat_id=message.chat.id,
@@ -46,6 +48,7 @@ async def add(callback: CallbackQuery, db: aiosqlite.Connection, state: FSMConte
                 parse_mode="HTML"
             )
             return
+        logger.info("Succesfully downloaded.")
 
         if not download_result or not download_result.path:
             await message.edit_text(
