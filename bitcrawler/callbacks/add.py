@@ -4,8 +4,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiosqlite import OperationalError
 from bitcrawler.utils import database, aiosqlite, Archive, bq, setup_logger
-from bitcrawler.config import DATABASES_FOLDER, API_HASH, API_ID
-from bitcrawler.userbot import download
+from bitcrawler.config import API_HASH, API_ID
+from bitcrawler import userbot
 from pathlib import Path
 from typing import Any
 from json import dumps, loads
@@ -25,19 +25,35 @@ async def add(callback: CallbackQuery, db: aiosqlite.Connection, state: FSMConte
     document = message.reply_to_message.document
 
     if document:
+        file_name = document.file_name or "archive"
+        archive_id = str(callback.data.split("_")[1])
+
         await message.edit_text(
             bq("Запрос принят.")+"\n"+
             bq("Загрузка архива...")+"\n",
             parse_mode="HTML"
         )
-        file = await bot.get_file(document.file_id)
-        file_path = file.file_path
-        file_name = document.file_name or "archive"
-        ARCHIVE_PATH = DATABASES_FOLDER / file_name
-        if not file_path: return
 
-        # await bot.download_file(file_path, ARCHIVE_PATH)
-        await download(message.chat.id, message.reply_to_message.message_id, file_name)
+        try:
+            download_result = await userbot.download(
+                chat_id=message.chat.id,
+                message_id=message.reply_to_message.message_id,
+                file_name=file_name
+            )
+        except Exception as e:
+            await message.edit_text(
+                bq("Ошибка при скачивании архива:") + "\n" + bq(str(e)),
+                parse_mode="HTML"
+            )
+            return
+
+        if not download_result or not download_result.path:
+            await message.edit_text(
+                bq("Не удалось загрузить архив."),
+                parse_mode="HTML"
+            )
+            return
+
         await message.edit_text(
             bq("Запрос принят.")+"\n"+
             bq("Архив загружен.")+"\n"+
@@ -48,12 +64,12 @@ async def add(callback: CallbackQuery, db: aiosqlite.Connection, state: FSMConte
         await state.set_state(EnterPassword.password)
         await state.update_data(
             call_message=dumps(message.model_dump()),
-            path=str(ARCHIVE_PATH),
-            archive_id=str(callback.data.split("_")[1])
+            path=str(download_result.path),
+            archive_id=archive_id,
+            file_name=file_name
         )
     else:
         await callback.answer("Архив не найден.")
-
 
 @database
 async def enter_pass(message: Message, db: aiosqlite.Connection, state: FSMContext, bot: Bot, **kwargs: Any) -> Any:
