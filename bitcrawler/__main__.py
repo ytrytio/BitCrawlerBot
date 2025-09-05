@@ -69,11 +69,10 @@ async def polling_loop() -> None:
 
 
 async def main() -> None:
-    if not client.is_connected():
-        await client.connect()
-
     try:
-        if API_ID and API_HASH:
+        if API_ID and API_HASH and PHONE:
+            if not client.is_connected():
+                await client.connect()
             info = await client.get_me()
             if info:
                 logger.info(f"User is already authorized: {info.id if isinstance(info, User) else info.user_id}")
