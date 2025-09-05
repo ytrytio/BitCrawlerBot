@@ -11,9 +11,9 @@ SESSION = AiohttpSession(proxy=PROXY) if PROXY else None
 SOURCE_CHAT_ID: int = int(secrets["SOURCE_CHAT_ID"]) # type: ignore
 SOURCE_TOPIC_ID: int = int(secrets["SOURCE_TOPIC_ID"]) # type: ignore
 
-API_ID: int | None = int(secrets["API_ID"]) # type: ignore
-API_HASH: str | None = secrets["API_HASH"] # type: ignore
-PHONE: str | None = secrets["PHONE"] # type: ignore
+API_ID: int | None = int(secrets["API_ID"]) if secrets["API_ID"] else None
+API_HASH: str | None = secrets["API_HASH"]
+PHONE: str | None = secrets["PHONE"]
 
 CURRENT_BRANCH = "master"
 
