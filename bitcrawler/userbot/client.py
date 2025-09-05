@@ -7,7 +7,8 @@ from pathlib import Path
 from telethon.tl.types import Message
 from bitcrawler.config import DATABASES_FOLDER, API_ID, API_HASH, UB_SESSION
 
-client = TelegramClient(str(UB_SESSION), API_ID, API_HASH)
+if API_ID and API_HASH:
+    client = TelegramClient(str(UB_SESSION), API_ID, API_HASH)
 
 async def download(chat_id: int, message_id: int, file_name: str) -> Path:
     async with client:
