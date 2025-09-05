@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiosqlite import OperationalError
 from bitcrawler.utils import database, aiosqlite, Archive, bq, setup_logger
-from bitcrawler.config import DATABASES_FOLDER
+from bitcrawler.config import DATABASES_FOLDER, API_HASH, API_ID
 from bitcrawler.userbot import download
 from pathlib import Path
 from typing import Any
@@ -20,6 +20,7 @@ class EnterPassword(StatesGroup):
 async def add(callback: CallbackQuery, db: aiosqlite.Connection, state: FSMContext, bot: Bot, **kwargs: Any):
     message = callback.message
     if not message or not isinstance(message, Message) or not message.reply_to_message or not callback.data: return
+    if not API_ID or not API_HASH: return await callback.answer("Юзербот-загрузчик не подключён.")
 
     document = message.reply_to_message.document
 
@@ -58,6 +59,7 @@ async def add(callback: CallbackQuery, db: aiosqlite.Connection, state: FSMConte
 async def enter_pass(message: Message, db: aiosqlite.Connection, state: FSMContext, bot: Bot, **kwargs: Any) -> Any:
     if not message or not message.from_user or not message.reply_to_message: return
     if isinstance(message, InaccessibleMessage): return
+    if not API_ID or not API_HASH: return await message.reply("Юзербот-загрузчик не подключён.")
 
     data = await state.get_data()
     call_msg = Message.model_validate(loads(data["call_message"]))

@@ -8,7 +8,7 @@ from telethon.errors import SessionPasswordNeededError # type: ignore
 from bitcrawler.core.bot import create_main_bot
 from bitcrawler.core.mirror import Mirror
 from bitcrawler.utils import init_db, setup_logger, LogColors
-from bitcrawler.config import SESSION, PHONE
+from bitcrawler.config import SESSION, PHONE, API_ID, API_HASH
 from bitcrawler.signals import restart_event
 from bitcrawler.storage.sqlitestorage import SQLiteStorage
 from bitcrawler.userbot.client import client
@@ -73,46 +73,50 @@ async def main() -> None:
         await client.connect()
 
     try:
-        info = await client.get_me()
-        if info:
-            logger.info(f"User is already authorized: {info.id if isinstance(info, User) else info.user_id}")
-        else:
-            logger.info(f"User is not authorized, starting login process...")
-            await client.send_code_request(PHONE)
-            code = input(f"{LogColors.CYAN}[INPUT] Введите код, отправленный на ваш номер телефона: {LogColors.RESET}")
-
-            try:
-                await client.sign_in(PHONE, code=code)
-            except SessionPasswordNeededError:
-                logger.info(f"Two-factor authentication password required.")
-                password = input(f"{LogColors.CYAN}[INPUT] Введите пароль для двухфакторной аутентификации: {LogColors.RESET}")
-                await client.sign_in(password=password)
-
+        if API_ID and API_HASH:
             info = await client.get_me()
-            if not info:
-                logger.error("Unable to retrieve user data after login.")
-                raise RuntimeError("Unable to retrieve user data after login.")
+            if info:
+                logger.info(f"User is already authorized: {info.id if isinstance(info, User) else info.user_id}")
+            else:
+                logger.info(f"User is not authorized, starting login process...")
+                await client.send_code_request(PHONE)
+                code = input(f"{LogColors.CYAN}[INPUT] Введите код, отправленный на ваш номер телефона: {LogColors.RESET}")
 
-        if isinstance(info, User):
-            user_id = info.id
+                try:
+                    await client.sign_in(PHONE, code=code)
+                except SessionPasswordNeededError:
+                    logger.info(f"Two-factor authentication password required.")
+                    password = input(f"{LogColors.CYAN}[INPUT] Введите пароль для двухфакторной аутентификации: {LogColors.RESET}")
+                    await client.sign_in(password=password)
+
+                info = await client.get_me()
+                if not info:
+                    logger.error("Unable to retrieve user data after login.")
+                    raise RuntimeError("Unable to retrieve user data after login.")
+
+            if isinstance(info, User):
+                user_id = info.id
+            else:
+                user_id = getattr(info, "user_id", None)
+
+            if user_id is None:
+                logger.error(f"Unable to determine user_id.")
+                raise RuntimeError("Unable to determine user_id.")
+
+            logger.info(f"Successfully connected to user account {user_id}.")
+
+            if isinstance(info, User):
+                user_id = info.id
+            else:
+                user_id = getattr(info, "user_id", None)
+
+            if user_id is None:
+                raise RuntimeError("Unable to get user_id.")
+
+            logger.info(f"Connected to user account {user_id}.")
         else:
-            user_id = getattr(info, "user_id", None)
+            logger.info(f"Userbot login was skipped.")
 
-        if user_id is None:
-            logger.error(f"Unable to determine user_id.")
-            raise RuntimeError("Unable to determine user_id.")
-
-        logger.info(f"Successfully connected to user account {user_id}.")
-
-        if isinstance(info, User):
-            user_id = info.id
-        else:
-            user_id = getattr(info, "user_id", None)
-
-        if user_id is None:
-            raise RuntimeError("Unable to get user_id.")
-
-        logger.info(f"Connected to user account {user_id}.")
         await init_db()
         await polling_loop()
 

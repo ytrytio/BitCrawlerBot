@@ -1,6 +1,6 @@
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from bitcrawler.utils import add_database, bq
-from bitcrawler.config import SOURCE_CHAT_ID, SOURCE_TOPIC_ID
+from bitcrawler.config import SOURCE_CHAT_ID, SOURCE_TOPIC_ID, API_ID, API_HASH
 from pathlib import Path
 
 
@@ -8,6 +8,7 @@ async def on_archive(message: Message):
     if not message.document or not message.chat: return
     if message.message_thread_id != SOURCE_TOPIC_ID: return
     if message.chat.id != SOURCE_CHAT_ID: return
+    if not API_ID or not API_HASH: return await message.reply("Юзербот-загрузчик не подключён.")
 
     file_name = message.document.file_name or " "
     file_ext = Path(file_name).suffix.lower()
